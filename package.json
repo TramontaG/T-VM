@@ -1,9 +1,12 @@
 {
-  "name": "T-VM",
-  "version": "0.0.1",
-  "description": "16 bit virutal machine with no libraries",
-  "main": "index.ts",
-  "repository": "git@github.com:TramontaG/T-VM.git",
-  "author": "Guilherme Tramontano <tramontano.guiherme@yahoo.com.br>",
-  "license": "MIT"
+    "name": "T-VM",
+    "version": "0.0.1",
+    "description": "16 bit virutal machine with no libraries",
+    "main": "index.ts",
+    "repository": "git@github.com:TramontaG/T-VM.git",
+    "author": "Guilherme Tramontano <tramontano.guiherme@yahoo.com.br>",
+    "license": "MIT",
+    "scripts": {
+        "start": "tsc && node ./dist/index.js"
+    }
 }
