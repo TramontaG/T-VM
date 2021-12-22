@@ -1,19 +1,12 @@
 import Memory from "./Hardware/Memory";
+import Processor from "./Hardware/Processor";
 
-const testMemory = new Memory(128);
-testMemory.setUInt16(0, 0xffff);
+const processorMemory = new Memory(0xffff);
+const processor = new Processor({
+    memory: processorMemory,
+});
 
-console.log(testMemory.getUInt16(0));
-console.log(testMemory.getUInt8(0));
-console.log(testMemory.getUInt8(1));
-console.log(testMemory.getUInt8(2));
-
-testMemory.setUInt16(126, 0x0506);
-console.log(testMemory.getUInt8(126));
-console.log(testMemory.getUInt8(127));
-
-try {
-    console.log(testMemory.getUInt8(128));
-} catch (e) {
-    console.log("offset is outside the bounds of dataview");
+while (true) {
+    processor.onClock();
+    if (processor.flags.HLT) break;
 }
