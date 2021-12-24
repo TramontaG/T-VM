@@ -8,5 +8,8 @@
     "license": "MIT",
     "scripts": {
         "start": "tsc && node ./dist/index.js"
+    },
+    "dependencies": {
+        "@guigalleta/t-parser": "^2.1.1"
     }
 }

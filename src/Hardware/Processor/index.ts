@@ -57,8 +57,8 @@ class Processor {
         const opCode = this.memory.getUInt8(this.programCounter.getUInt16(0));
 
         const instructionMap: { [key: number]: () => void } = {
-            0: this.noOp,
-            0xff: this.halt,
+            0: this.NOP,
+            0xff: this.HLT,
         };
 
         const method = instructionMap[opCode];
@@ -70,11 +70,11 @@ class Processor {
         return this.programCounter.getUInt16(0);
     }
 
-    private noOp() {
+    private NOP() {
         console.log(this.incrementPC());
     }
 
-    private halt() {
+    private HLT() {
         this.incrementPC();
         this.flags.HLT = true;
     }
