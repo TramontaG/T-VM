@@ -6,3 +6,8 @@
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@guigalleta/t-parser/-/t-parser-2.1.1.tgz#87f965670350fd28a54284935cacca666ff25af7"
   integrity sha512-ipzB2jcwfelCdEhIt4J2P0VcSX9Zzaby3uLQPBXxGjFLjh62b+D6t0B7GyFlD+2ZI0HaCdpVSmjvACLJSzCeZQ==
+
+"@types/node@^17.0.4":
+  version "17.0.4"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.4.tgz#fec0ce0526abb6062fd206d72a642811b887a111"
+  integrity sha512-6xwbrW4JJiJLgF+zNypN5wr2ykM9/jHcL7rQ8fZe2vuftggjzZeRSM4OwRc6Xk8qWjwJ99qVHo/JgOGmomWRog==

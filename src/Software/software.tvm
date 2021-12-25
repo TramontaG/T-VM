@@ -1,0 +1,7 @@
+label:
+    PSH $end;
+    NOP;
+    HLT;
+    NOP;
+end:
+    HLT;

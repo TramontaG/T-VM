@@ -6,6 +6,7 @@ const operand = T.choice([
     atoms.immediateValue,
     atoms.address,
     atoms.registerPointer,
+    atoms.labelRead,
 ]);
 
 const singleArgInstruction = T.transform(

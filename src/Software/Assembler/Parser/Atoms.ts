@@ -1,15 +1,25 @@
 import * as T from "@guigalleta/t-parser";
 
+export const lineBreak = T.choice([T.str("\r\n"), T.str("\n")]);
+
 export const name = T.transform(
     T.sequenceOf([T.letter, T.lettersOrDigits], "name"),
     ({ result }) => result[0] + result[1]
 );
 
-export const label = T.transform(
+export const labelDeclaration = T.transform(
     T.sequenceOf([name, T.str(":")], "label"),
     ({ result }) => ({
         type: "label",
         value: result[0],
+    })
+);
+
+export const labelRead = T.transform(
+    T.sequenceOf([T.str("$"), name]),
+    ({ result }) => ({
+        type: "address",
+        value: result[1],
     })
 );
 
