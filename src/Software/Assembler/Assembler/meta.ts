@@ -24,6 +24,18 @@ export const instructions = {
             opCode: 0x12,
             sizeInBytes: 4,
         },
+        address_register: {
+            opCode: 0x13,
+            sizeInBytes: 4,
+        },
+        address_registerPointer: {
+            opCode: 0x14,
+            sizeInBytes: 4,
+        },
+        immediate_address: {
+            opCode: 0x15,
+            sizeInBytes: 5,
+        },
     },
 
     PSH: {
@@ -40,6 +52,17 @@ export const instructions = {
     POP: {
         register: {
             opCode: 0x1c,
+            sizeInBytes: 2,
+        },
+    },
+
+    JMP: {
+        address: {
+            opCode: 0x20,
+            sizeInBytes: 3,
+        },
+        registerPointer: {
+            opCode: 0x21,
             sizeInBytes: 2,
         },
     },

@@ -98,6 +98,10 @@ class Processor {
         return this.memory.getUInt16(address);
     }
 
+    private fetchRegister() {
+        return this.getRegisterFromNumber(this.fetch8());
+    }
+
     private runInstruction() {
         const opCode = this.memory.getUInt8(this.registers.PC.getUInt16(0));
 
@@ -107,9 +111,14 @@ class Processor {
             0x10: this.MOV_REG_REG,
             0x11: this.MOV_REG_ADD,
             0x12: this.MOV_IMM_REG,
+            0x13: this.MOV_ADD_REG,
+            0x14: this.MOV_ADD_REGP,
+            0x15: this.MOV_IMM_ADD,
             0x1a: this.PSH_REG,
             0x1b: this.PSH_IMM,
             0x1c: this.POP_REG,
+            0x20: this.JMP_ADD,
+            0x21: this.JMP_REGP,
         };
 
         const method = instructionMap[opCode];
@@ -129,8 +138,8 @@ class Processor {
     }
 
     private MOV_REG_REG() {
-        const register1 = this.getRegisterFromNumber(this.fetch8());
-        const register2 = this.getRegisterFromNumber(this.fetch8());
+        const register1 = this.fetchRegister();
+        const register2 = this.fetchRegister();
 
         if (!register1 || !register2) return;
 
@@ -138,7 +147,7 @@ class Processor {
     }
 
     private MOV_REG_ADD() {
-        const register = this.getRegisterFromNumber(this.fetch8());
+        const register = this.fetchRegister();
         const address = this.fetch16();
 
         if (!register) return;
@@ -148,13 +157,33 @@ class Processor {
 
     private MOV_IMM_REG() {
         const value = this.fetch16();
-        const register = this.getRegisterFromNumber(this.fetch8());
+        const register = this.fetchRegister();
         if (!register) return;
         register.setValue(value);
     }
 
+    private MOV_ADD_REG() {
+        const address = this.fetch16();
+        const register = this.fetchRegister();
+        if (!register) return;
+        register.setValue(this.memory.getUInt16(address));
+    }
+
+    private MOV_ADD_REGP() {
+        const address = this.fetch16();
+        const register = this.fetchRegister();
+        if (!register) return;
+        register.setValue(address);
+    }
+
+    private MOV_IMM_ADD() {
+        const value = this.fetch16();
+        const address = this.fetch16();
+        this.memory.setUInt16(address, value);
+    }
+
     private PSH_REG() {
-        const register = this.getRegisterFromNumber(this.fetch8());
+        const register = this.fetchRegister();
         const whereStackPointerIsPointing = this.registers.SP.getUInt16(0);
         if (!register) return;
         this.memory.setUInt16(whereStackPointerIsPointing, register.getValue());
@@ -172,9 +201,20 @@ class Processor {
         this.registers.SP.increment(2);
         const whereStackPointerIsPointing = this.registers.SP.getUInt16(0);
         const value = this.memory.getUInt16(whereStackPointerIsPointing);
-        const register = this.getRegisterFromNumber(this.fetch8());
+        const register = this.fetchRegister();
         if (!register) return;
         register.setValue(value);
+    }
+
+    private JMP_ADD() {
+        const address = this.fetch16();
+        this.registers.PC.setValue(address);
+    }
+
+    private JMP_REGP() {
+        const register = this.fetchRegister();
+        if (!register) return;
+        this.registers.PC.setValue(register.getValue());
     }
 }
 
