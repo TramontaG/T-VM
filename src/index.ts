@@ -1,12 +1,23 @@
 import Memory from "./Hardware/Memory";
 import Processor from "./Hardware/Processor";
+import assemble from "./Software/Assembler/Assembler";
+import { createCpuDebugger, createMemoryDebugger } from "./Util/Log/Logger";
 
-const processorMemory = new Memory(0xffff);
-const processor = new Processor({
-    memory: processorMemory,
+assemble().then((program) => {
+    const memory = new Memory(0xffff);
+    memory.memoryManager = program;
+    const processor = new Processor({
+        memory,
+    });
+
+    const CPUDebugger = createCpuDebugger(processor);
+    const MemoryDebugger = createMemoryDebugger(memory, "MainMemory");
+
+    while (true) {
+        processor.onClock();
+        if (processor.flags.HLT) break;
+    }
+
+    CPUDebugger.debugRegisters();
+    MemoryDebugger.debugAt(0);
 });
-
-while (true) {
-    processor.onClock();
-    if (processor.flags.HLT) break;
-}

@@ -1,6 +1,6 @@
 import Memory from "../Memory";
 
-enum GeneralRegisters {
+export enum GeneralRegisters {
     R1 = "R1",
     R2 = "R2",
     R3 = "R3",
@@ -9,6 +9,10 @@ enum GeneralRegisters {
     R6 = "R6",
     R7 = "R7",
     R8 = "R8",
+    ACC = "ACC",
+    SP = "SP",
+    FP = "FP",
+    PC = "PC",
 }
 
 type Flags = {
@@ -26,27 +30,28 @@ type Registers = {
 class Processor {
     memory: Memory;
     registers: Registers;
-    programCounter: Memory;
     flags: Flags;
 
     constructor(options: Options) {
         this.memory = options.memory;
         this.registers = {
-            R1: new Memory(16),
-            R2: new Memory(16),
-            R3: new Memory(16),
-            R4: new Memory(16),
-            R5: new Memory(16),
-            R6: new Memory(16),
-            R7: new Memory(16),
-            R8: new Memory(16),
+            R1: new Memory(2),
+            R2: new Memory(2),
+            R3: new Memory(2),
+            R4: new Memory(2),
+            R5: new Memory(2),
+            R6: new Memory(2),
+            R7: new Memory(2),
+            R8: new Memory(2),
+            ACC: new Memory(2),
+            SP: new Memory(2),
+            FP: new Memory(2),
+            PC: new Memory(16 / 8),
         };
 
         this.flags = {
             HLT: false,
         };
-
-        this.programCounter = new Memory(16 / 8);
     }
 
     onClock() {
@@ -54,7 +59,7 @@ class Processor {
     }
 
     private runInstruction() {
-        const opCode = this.memory.getUInt8(this.programCounter.getUInt16(0));
+        const opCode = this.memory.getUInt8(this.registers.PC.getUInt16(0));
 
         const instructionMap: { [key: number]: () => void } = {
             0: this.NOP,
@@ -66,12 +71,12 @@ class Processor {
     }
 
     private incrementPC() {
-        this.programCounter.setUInt16(0, this.programCounter.getUInt16(0) + 1);
-        return this.programCounter.getUInt16(0);
+        this.registers.PC.setUInt16(0, this.registers.PC.getUInt16(0) + 1);
+        return this.registers.PC.getUInt16(0);
     }
 
     private NOP() {
-        console.log(this.incrementPC());
+        this.incrementPC();
     }
 
     private HLT() {

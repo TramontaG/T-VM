@@ -12,14 +12,6 @@ type LabelMap = { [key: string]: number };
 const getProgram = () =>
     fs.readFile("src/Software/software.tvm", { encoding: "utf-8" });
 
-getProgram().then((program) => {
-    const ast = programParser(program);
-    console.log(JSON.stringify(ast.result, null, "    "));
-    const assembled = assemble(ast);
-    console.log(assembled);
-    return assembled;
-});
-
 const encodeOperand = (operand: Operand, labelMap: LabelMap) => {
     if (!operand)
         return {
@@ -152,3 +144,10 @@ const hoistLabels = (ast: any[]) => {
 
     return labelMap;
 };
+
+export default () =>
+    getProgram().then((program) => {
+        const ast = programParser(program);
+        const assembled = assemble(ast);
+        return assembled;
+    });
