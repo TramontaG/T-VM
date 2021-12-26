@@ -1,6 +1,8 @@
 label:
     MOV 0x10 R1;
-    MOV R1 R3;
-    MOV R3 $0x0E;
+    PSH R1;
+    PSH 0xFFFF;
+    POP R1;
+    POP R2;
 end:
     HLT;

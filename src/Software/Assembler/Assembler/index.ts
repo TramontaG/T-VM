@@ -86,7 +86,7 @@ const loadOperand = (
 const assemble = (ast: any) => {
     if (ast.isError) throw ast.errorStack;
 
-    const buffer = new ArrayBuffer(0xffff);
+    const buffer = new ArrayBuffer(0x10000);
     const memory = new DataView(buffer);
 
     const labelMap = hoistLabels(ast.result);

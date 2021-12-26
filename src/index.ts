@@ -4,7 +4,7 @@ import assemble from "./Software/Assembler/Assembler";
 import { createCpuDebugger, createMemoryDebugger } from "./Util/Log/Logger";
 
 assemble().then((program) => {
-    const memory = new Memory(0xffff);
+    const memory = new Memory(0x10000);
     memory.memoryManager = program;
     const processor = new Processor({
         memory,
@@ -12,6 +12,7 @@ assemble().then((program) => {
 
     const CPUDebugger = createCpuDebugger(processor);
     const MemoryDebugger = createMemoryDebugger(memory, "MainMemory");
+    const StackDebugger = createMemoryDebugger(memory, "Stack");
 
     while (true) {
         processor.onClock();
@@ -19,5 +20,6 @@ assemble().then((program) => {
     }
 
     MemoryDebugger.debugAt(0);
+    StackDebugger.debugAt(0xfff0);
     CPUDebugger.debugRegisters();
 });

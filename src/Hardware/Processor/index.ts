@@ -1,5 +1,6 @@
 import { register } from "../../Software/Assembler/Parser/Atoms";
 import Memory from "../Memory";
+import Register from "./Register";
 
 export enum GeneralRegisters {
     R1 = "R1",
@@ -25,7 +26,7 @@ type Options = {
 };
 
 type Registers = {
-    [property in GeneralRegisters]: Memory;
+    [property in GeneralRegisters]: Register;
 };
 
 class Processor {
@@ -36,19 +37,22 @@ class Processor {
     constructor(options: Options) {
         this.memory = options.memory;
         this.registers = {
-            R1: new Memory(2),
-            R2: new Memory(2),
-            R3: new Memory(2),
-            R4: new Memory(2),
-            R5: new Memory(2),
-            R6: new Memory(2),
-            R7: new Memory(2),
-            R8: new Memory(2),
-            ACC: new Memory(2),
-            SP: new Memory(2),
-            FP: new Memory(2),
-            PC: new Memory(16 / 8),
+            R1: new Register(2),
+            R2: new Register(2),
+            R3: new Register(2),
+            R4: new Register(2),
+            R5: new Register(2),
+            R6: new Register(2),
+            R7: new Register(2),
+            R8: new Register(2),
+            ACC: new Register(2),
+            SP: new Register(2),
+            FP: new Register(2),
+            PC: new Register(16 / 8),
         };
+
+        this.registers.SP.setValue(0xfffe);
+        this.registers.FP.setValue(0xfffe);
 
         this.flags = {
             HLT: false,
@@ -90,8 +94,7 @@ class Processor {
 
     private fetch16() {
         const address = this.registers.PC.getUInt16(0);
-        this.incrementPC();
-        this.incrementPC();
+        this.incrementPC(2);
         return this.memory.getUInt16(address);
     }
 
@@ -104,6 +107,9 @@ class Processor {
             0x10: this.MOV_REG_REG,
             0x11: this.MOV_REG_ADD,
             0x12: this.MOV_IMM_REG,
+            0x1a: this.PSH_REG,
+            0x1b: this.PSH_IMM,
+            0x1c: this.POP_REG,
         };
 
         const method = instructionMap[opCode];
@@ -111,9 +117,9 @@ class Processor {
         method.bind(this)();
     }
 
-    private incrementPC() {
-        this.registers.PC.setUInt16(0, this.registers.PC.getUInt16(0) + 1);
-        return this.registers.PC.getUInt16(0);
+    private incrementPC(amount?: number) {
+        this.registers.PC.increment(amount);
+        return this.registers.PC.getValue();
     }
 
     private NOP() {}
@@ -128,7 +134,7 @@ class Processor {
 
         if (!register1 || !register2) return;
 
-        register2.setUInt16(0, register1.getUInt16(0));
+        register2.setValue(register1.getValue());
     }
 
     private MOV_REG_ADD() {
@@ -144,7 +150,31 @@ class Processor {
         const value = this.fetch16();
         const register = this.getRegisterFromNumber(this.fetch8());
         if (!register) return;
-        register.setUInt16(0, value);
+        register.setValue(value);
+    }
+
+    private PSH_REG() {
+        const register = this.getRegisterFromNumber(this.fetch8());
+        const whereStackPointerIsPointing = this.registers.SP.getUInt16(0);
+        if (!register) return;
+        this.memory.setUInt16(whereStackPointerIsPointing, register.getValue());
+        this.registers.SP.decrement(2);
+    }
+
+    private PSH_IMM() {
+        const value = this.fetch16();
+        const whereStackPointerIsPointing = this.registers.SP.getUInt16(0);
+        this.memory.setUInt16(whereStackPointerIsPointing, value);
+        this.registers.SP.decrement(2);
+    }
+
+    private POP_REG() {
+        this.registers.SP.increment(2);
+        const whereStackPointerIsPointing = this.registers.SP.getUInt16(0);
+        const value = this.memory.getUInt16(whereStackPointerIsPointing);
+        const register = this.getRegisterFromNumber(this.fetch8());
+        if (!register) return;
+        register.setValue(value);
     }
 }
 

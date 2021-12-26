@@ -25,6 +25,24 @@ export const instructions = {
             sizeInBytes: 4,
         },
     },
+
+    PSH: {
+        register: {
+            opCode: 0x1a,
+            sizeInBytes: 2,
+        },
+        immediate: {
+            opCode: 0x1b,
+            sizeInBytes: 3,
+        },
+    },
+
+    POP: {
+        register: {
+            opCode: 0x1c,
+            sizeInBytes: 2,
+        },
+    },
 };
 
 export const registers = {

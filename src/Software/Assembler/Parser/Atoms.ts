@@ -50,7 +50,7 @@ export const register = T.transform(
 );
 
 export const hexValue = T.transform(
-    T.sequenceOf([T.str("0x"), T.regexMatch(/^[0-9a-eA-E]+/)]),
+    T.sequenceOf([T.str("0x"), T.regexMatch(/^[0-9a-fA-F]+/)]),
     ({ result }) => ({
         type: "hexValue",
         value: Number(`0x${result[1]}`),
