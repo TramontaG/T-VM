@@ -35,7 +35,7 @@ const encodeOperand = (operand: Operand, labelMap: LabelMap) => {
         };
     }
 
-    if (operand.type === "immediateValue") {
+    if (operand.type === "immediate") {
         return {
             sizeInBytes: 2,
             value: operand.value as number,
@@ -148,6 +148,7 @@ const hoistLabels = (ast: any[]) => {
 export default () =>
     getProgram().then((program) => {
         const ast = programParser(program);
+        console.log(ast);
         const assembled = assemble(ast);
         return assembled;
     });

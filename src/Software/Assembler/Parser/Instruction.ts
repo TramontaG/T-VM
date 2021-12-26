@@ -39,7 +39,7 @@ const doubleArgInstruction = T.transform(
     ),
     ({ result }) => ({
         type: "instruction",
-        variant: `${result[2].type}-${result[4].type}`,
+        variant: `${result[2].type}_${result[4].type}`,
         opCode: result[0],
         operands: {
             operand1: result[2],

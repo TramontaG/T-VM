@@ -18,6 +18,6 @@ assemble().then((program) => {
         if (processor.flags.HLT) break;
     }
 
-    CPUDebugger.debugRegisters();
     MemoryDebugger.debugAt(0);
+    CPUDebugger.debugRegisters();
 });

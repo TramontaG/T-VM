@@ -50,7 +50,7 @@ export const register = T.transform(
 );
 
 export const hexValue = T.transform(
-    T.sequenceOf([T.str("0x"), T.digits]),
+    T.sequenceOf([T.str("0x"), T.regexMatch(/^[0-9a-eA-E]+/)]),
     ({ result }) => ({
         type: "hexValue",
         value: Number(`0x${result[1]}`),
@@ -73,7 +73,7 @@ export const decimalValue = T.transform(T.digits, ({ result }) => ({
 export const immediateValue = T.transform(
     T.choice([hexValue, binaryValue, decimalValue]),
     ({ result }) => ({
-        type: "immediateValue",
+        type: "immediate",
         value: result.value,
     })
 );

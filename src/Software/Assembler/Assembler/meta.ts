@@ -11,14 +11,18 @@ export const instructions = {
             sizeInBytes: 1,
         },
     },
-    PSH: {
-        register: {
+    MOV: {
+        register_register: {
             opCode: 0x10,
-            sizeInBytes: 2,
-        },
-        address: {
-            opCode: 0x11,
             sizeInBytes: 3,
+        },
+        register_address: {
+            opCode: 0x11,
+            sizeInBytes: 4,
+        },
+        immediate_register: {
+            opCode: 0x12,
+            sizeInBytes: 4,
         },
     },
 };
@@ -32,6 +36,7 @@ export const registers = {
     R6: 0x06,
     R7: 0x07,
     R8: 0x08,
-    ACC: 0x10,
-    PC: 0x00,
+    ACC: 0x00,
+    SP: 0x0a,
+    FP: 0x0b,
 };

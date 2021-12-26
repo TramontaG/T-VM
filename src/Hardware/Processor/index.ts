@@ -1,3 +1,4 @@
+import { register } from "../../Software/Assembler/Parser/Atoms";
 import Memory from "../Memory";
 
 export enum GeneralRegisters {
@@ -55,7 +56,43 @@ class Processor {
     }
 
     onClock() {
+        console.log(
+            "RUNNING INSTRUCTION ON ADDRESS",
+            this.registers.PC.getUInt16(0)
+        );
         this.runInstruction();
+    }
+
+    getRegisterFromNumber(number: number) {
+        const registerArr = [
+            this.registers.ACC,
+            this.registers.R1,
+            this.registers.R2,
+            this.registers.R3,
+            this.registers.R4,
+            this.registers.R5,
+            this.registers.R6,
+            this.registers.R7,
+            this.registers.R8,
+            undefined,
+            this.registers.SP,
+            this.registers.FP,
+        ];
+
+        return registerArr[number];
+    }
+
+    private fetch8() {
+        const address = this.registers.PC.getUInt16(0);
+        this.incrementPC();
+        return this.memory.getUInt8(address);
+    }
+
+    private fetch16() {
+        const address = this.registers.PC.getUInt16(0);
+        this.incrementPC();
+        this.incrementPC();
+        return this.memory.getUInt16(address);
     }
 
     private runInstruction() {
@@ -64,9 +101,13 @@ class Processor {
         const instructionMap: { [key: number]: () => void } = {
             0: this.NOP,
             0xff: this.HLT,
+            0x10: this.MOV_REG_REG,
+            0x11: this.MOV_REG_ADD,
+            0x12: this.MOV_IMM_REG,
         };
 
         const method = instructionMap[opCode];
+        this.incrementPC();
         method.bind(this)();
     }
 
@@ -75,13 +116,35 @@ class Processor {
         return this.registers.PC.getUInt16(0);
     }
 
-    private NOP() {
-        this.incrementPC();
-    }
+    private NOP() {}
 
     private HLT() {
-        this.incrementPC();
         this.flags.HLT = true;
+    }
+
+    private MOV_REG_REG() {
+        const register1 = this.getRegisterFromNumber(this.fetch8());
+        const register2 = this.getRegisterFromNumber(this.fetch8());
+
+        if (!register1 || !register2) return;
+
+        register2.setUInt16(0, register1.getUInt16(0));
+    }
+
+    private MOV_REG_ADD() {
+        const register = this.getRegisterFromNumber(this.fetch8());
+        const address = this.fetch16();
+
+        if (!register) return;
+
+        this.memory.setUInt16(address, register.getUInt16(0));
+    }
+
+    private MOV_IMM_REG() {
+        const value = this.fetch16();
+        const register = this.getRegisterFromNumber(this.fetch8());
+        if (!register) return;
+        register.setUInt16(0, value);
     }
 }
 

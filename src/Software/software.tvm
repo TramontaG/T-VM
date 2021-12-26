@@ -1,5 +1,6 @@
 label:
-    NOP;
-    NOP;
+    MOV 0x10 R1;
+    MOV R1 R3;
+    MOV R3 $0x0E;
 end:
     HLT;
