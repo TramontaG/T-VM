@@ -1,8 +1,3 @@
-label:
-    MOV $end *R1;
-    MOV 0xffff $0xFFFE;
-    JMP *R1;
-notused:
-    MOV 0xFF R1;
-end:
-    HLT;
+MOV 0x05 ACC;
+SUB ACC 0;
+HLT;

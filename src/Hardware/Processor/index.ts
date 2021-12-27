@@ -19,6 +19,8 @@ export enum GeneralRegisters {
 
 type Flags = {
     HLT: boolean;
+    CARRY: boolean;
+    ZERO: boolean;
 };
 
 type Options = {
@@ -48,7 +50,7 @@ class Processor {
             ACC: new Register(2),
             SP: new Register(2),
             FP: new Register(2),
-            PC: new Register(16 / 8),
+            PC: new Register(2),
         };
 
         this.registers.SP.setValue(0xfffe);
@@ -56,6 +58,8 @@ class Processor {
 
         this.flags = {
             HLT: false,
+            CARRY: false,
+            ZERO: false,
         };
     }
 
@@ -63,25 +67,27 @@ class Processor {
         console.log(
             "RUNNING INSTRUCTION ON ADDRESS",
             this.registers.PC.getUInt16(0)
+                .toString(16)
+                .toUpperCase()
+                .padStart(2, "0")
         );
         this.runInstruction();
     }
 
     getRegisterFromNumber(number: number) {
-        const registerArr = [
-            this.registers.ACC,
-            this.registers.R1,
-            this.registers.R2,
-            this.registers.R3,
-            this.registers.R4,
-            this.registers.R5,
-            this.registers.R6,
-            this.registers.R7,
-            this.registers.R8,
-            undefined,
-            this.registers.SP,
-            this.registers.FP,
-        ];
+        const registerArr: { [key: number]: Register } = {
+            0x01: this.registers.R1,
+            0x02: this.registers.R2,
+            0x03: this.registers.R3,
+            0x04: this.registers.R4,
+            0x05: this.registers.R5,
+            0x06: this.registers.R6,
+            0x07: this.registers.R8,
+            0x08: this.registers.R7,
+            0x0a: this.registers.SP,
+            0x0b: this.registers.FP,
+            0x0f: this.registers.ACC,
+        };
 
         return registerArr[number];
     }
@@ -119,9 +125,14 @@ class Processor {
             0x1c: this.POP_REG,
             0x20: this.JMP_ADD,
             0x21: this.JMP_REGP,
+            0xa0: this.ADD_REG_REG,
+            0xa1: this.ADD_IMM_REG,
+            0xa2: this.SUB_REG_REG,
+            0xa3: this.SUB_IMM_REG,
         };
 
         const method = instructionMap[opCode];
+        console.log("RUNNING METHOD", method);
         this.incrementPC();
         method.bind(this)();
     }
@@ -137,10 +148,12 @@ class Processor {
         this.flags.HLT = true;
     }
 
+    //Moving data
     private MOV_REG_REG() {
         const register1 = this.fetchRegister();
         const register2 = this.fetchRegister();
 
+        console.log("reg1 =", register1, "reg2 =", register2);
         if (!register1 || !register2) return;
 
         register2.setValue(register1.getValue());
@@ -182,6 +195,7 @@ class Processor {
         this.memory.setUInt16(address, value);
     }
 
+    //Stack manipulation
     private PSH_REG() {
         const register = this.fetchRegister();
         const whereStackPointerIsPointing = this.registers.SP.getUInt16(0);
@@ -206,6 +220,7 @@ class Processor {
         register.setValue(value);
     }
 
+    //Branching
     private JMP_ADD() {
         const address = this.fetch16();
         this.registers.PC.setValue(address);
@@ -215,6 +230,52 @@ class Processor {
         const register = this.fetchRegister();
         if (!register) return;
         this.registers.PC.setValue(register.getValue());
+    }
+
+    //ALU
+    private ADD_REG_REG() {
+        const reg1 = this.fetchRegister();
+        const reg2 = this.fetchRegister();
+        if (!reg1 || !reg2) return;
+
+        const value = reg1.getValue() + reg2.getValue();
+        if (value > 0xffff) this.flags.CARRY = true;
+
+        this.registers.ACC.setValue(value & 0xffff);
+    }
+
+    private ADD_IMM_REG() {
+        const immediate = this.fetch16();
+        const register = this.fetchRegister();
+        if (!register) return;
+
+        const value = immediate + register.getValue();
+        if (value > 0xffff) this.flags.CARRY = true;
+
+        this.registers.ACC.setValue(value & 0xffff);
+    }
+
+    private SUB_REG_REG() {
+        const reg1 = this.fetchRegister();
+        const reg2 = this.fetchRegister();
+        if (!reg1 || !reg2) return;
+
+        const value = reg1.getValue() - reg2.getValue();
+        if (value < 0) this.flags.ZERO = true;
+
+        this.registers.ACC.setValue(value & 0xffff);
+    }
+
+    private SUB_IMM_REG() {
+        const register = this.fetchRegister();
+        const immediate = this.fetch16();
+        if (!register) return;
+
+        const value = register.getValue() - immediate;
+        console.log(`${immediate} - ${register.getValue()} = ${value}`);
+        if (value < 0) this.flags.ZERO = true;
+
+        this.registers.ACC.setValue(value & 0xffff);
     }
 }
 

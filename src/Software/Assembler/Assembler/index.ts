@@ -71,7 +71,7 @@ const loadOperand = (
 ) => {
     const { value, sizeInBytes } = encodeOperand(operand, labelMap);
 
-    if (!value || !sizeInBytes) return;
+    if (value === undefined || !sizeInBytes) return;
     if (sizeInBytes == 2) {
         memory.setUint16(byteOffset, value);
         byteOffset += 2;
@@ -148,7 +148,8 @@ const hoistLabels = (ast: any[]) => {
 export default () =>
     getProgram().then((program) => {
         const ast = programParser(program);
-        console.log(ast);
+        // console.log(ast);
         const assembled = assemble(ast);
+        console.log(assembled);
         return assembled;
     });

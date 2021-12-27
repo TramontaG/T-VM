@@ -13,13 +13,13 @@ assemble().then((program) => {
     const CPUDebugger = createCpuDebugger(processor);
     const MemoryDebugger = createMemoryDebugger(memory, "MainMemory");
     const StackDebugger = createMemoryDebugger(memory, "Stack");
+    MemoryDebugger.debugAt(0);
 
-    while (true) {
+    while (processor.registers.PC.getValue() < 200) {
         processor.onClock();
         if (processor.flags.HLT) break;
     }
 
-    MemoryDebugger.debugAt(0);
     StackDebugger.debugAt(0xfff0);
     CPUDebugger.debugRegisters();
 });

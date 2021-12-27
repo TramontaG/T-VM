@@ -66,6 +66,53 @@ export const instructions = {
             sizeInBytes: 2,
         },
     },
+
+    ADD: {
+        register_register: {
+            opCode: 0xa0,
+            sizeInBytes: 3,
+        },
+        immediate_register: {
+            opCode: 0xa1,
+            sizeInBytes: 4,
+        },
+    },
+    SUB: {
+        register_register: {
+            opCode: 0xa2,
+            sizeInBytes: 3,
+        },
+        register_immediate: {
+            opCode: 0xa3,
+            sizeInBytes: 4,
+        },
+    },
+    AOR: {
+        register_register: {
+            opCode: 0xa4,
+            sizeInBytes: 3,
+        },
+        immediate_register: {
+            opCode: 0xa5,
+            sizeInBytes: 4,
+        },
+    },
+    AND: {
+        register_register: {
+            opCode: 0xa6,
+            sizeInBytes: 3,
+        },
+        immediate_register: {
+            opCode: 0xa7,
+            sizeInBytes: 4,
+        },
+    },
+    NOT: {
+        register: {
+            opCode: 0xa7,
+            sizeInBytes: 2,
+        },
+    },
 };
 
 export const registers = {
@@ -77,7 +124,7 @@ export const registers = {
     R6: 0x06,
     R7: 0x07,
     R8: 0x08,
-    ACC: 0x00,
+    ACC: 0x0f,
     SP: 0x0a,
     FP: 0x0b,
 };
