@@ -1,3 +1,10 @@
-MOV 0x05 ACC;
-SUB ACC 0;
-HLT;
+loop:
+    MOV 0x5 $0xFF;
+    EQL ACC $0xFF;
+        JMP $end;
+    END;
+    ADD 1 ACC;
+    JMP $loop;
+
+end:
+    HLT;

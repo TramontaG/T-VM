@@ -109,8 +109,97 @@ export const instructions = {
     },
     NOT: {
         register: {
-            opCode: 0xa7,
+            opCode: 0xa8,
             sizeInBytes: 2,
+        },
+    },
+    SFL: {
+        register_immediateByte: {
+            opCode: 0xa9,
+            sizeInBytes: 3,
+        },
+    },
+    SFR: {
+        register_immediateByte: {
+            opCode: 0xaa,
+            sizeInBytes: 3,
+        },
+    },
+    //conditions
+    EQL: {
+        register_register: {
+            opCode: 0xb0,
+            sizeInBytes: 3,
+        },
+        register_immediate: {
+            opCode: 0xb1,
+            sizeInBytes: 4,
+        },
+        register_address: {
+            opCode: 0xb2,
+            sizeInBytes: 4,
+        },
+    },
+    GTR: {
+        register_register: {
+            opCode: 0xb3,
+            sizeInBytes: 3,
+        },
+        register_immediate: {
+            opCode: 0xb4,
+            sizeInBytes: 4,
+        },
+        register_address: {
+            opCode: 0xb5,
+            sizeInBytes: 4,
+        },
+    },
+    LSS: {
+        register_register: {
+            opCode: 0xb6,
+            sizeInBytes: 3,
+        },
+        register_immediate: {
+            opCode: 0xb7,
+            sizeInBytes: 4,
+        },
+        register_address: {
+            opCode: 0xb8,
+            sizeInBytes: 4,
+        },
+    },
+    GEQ: {
+        register_register: {
+            opCode: 0xb9,
+            sizeInBytes: 3,
+        },
+        register_immediate: {
+            opCode: 0xba,
+            sizeInBytes: 4,
+        },
+        register_address: {
+            opCode: 0xbb,
+            sizeInBytes: 4,
+        },
+    },
+    LEQ: {
+        register_register: {
+            opCode: 0xbc,
+            sizeInBytes: 3,
+        },
+        register_immediate: {
+            opCode: 0xbd,
+            sizeInBytes: 4,
+        },
+        register_address: {
+            opCode: 0xbe,
+            sizeInBytes: 4,
+        },
+    },
+    END: {
+        noArgs: {
+            opCode: 0xbf,
+            sizeInBytes: 1,
         },
     },
 };

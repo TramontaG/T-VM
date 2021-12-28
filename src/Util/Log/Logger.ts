@@ -27,6 +27,16 @@ export const createMemoryDebugger = (memory: Memory, title: string) => {
         colorLog(debugString, "green");
     };
 
+    const debugRange = (start: number, end: number) => {
+        let header = `|`;
+        let debugString = "| ";
+
+        for (let i = start; i < end; i++) {
+            header += `${getHex16(i)}|`;
+            debugString += `${getHexByte(memory.getUInt8(i))} | `;
+        }
+    };
+
     return {
         debugAt,
     };

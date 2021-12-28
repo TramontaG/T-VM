@@ -21,6 +21,7 @@ type Flags = {
     HLT: boolean;
     CARRY: boolean;
     ZERO: boolean;
+    CONDITION: boolean;
 };
 
 type Options = {
@@ -60,6 +61,7 @@ class Processor {
             HLT: false,
             CARRY: false,
             ZERO: false,
+            CONDITION: true,
         };
     }
 
@@ -69,7 +71,7 @@ class Processor {
             this.registers.PC.getUInt16(0)
                 .toString(16)
                 .toUpperCase()
-                .padStart(2, "0")
+                .padStart(2, "0") + ":"
         );
         this.runInstruction();
     }
@@ -114,26 +116,48 @@ class Processor {
         const instructionMap: { [key: number]: () => void } = {
             0: this.NOP,
             0xff: this.HLT,
+            //moving data
             0x10: this.MOV_REG_REG,
             0x11: this.MOV_REG_ADD,
             0x12: this.MOV_IMM_REG,
             0x13: this.MOV_ADD_REG,
             0x14: this.MOV_ADD_REGP,
             0x15: this.MOV_IMM_ADD,
+            //stack manipulation
             0x1a: this.PSH_REG,
             0x1b: this.PSH_IMM,
             0x1c: this.POP_REG,
+            //branching
             0x20: this.JMP_ADD,
             0x21: this.JMP_REGP,
+            //ALU
             0xa0: this.ADD_REG_REG,
             0xa1: this.ADD_IMM_REG,
             0xa2: this.SUB_REG_REG,
             0xa3: this.SUB_IMM_REG,
+            0xa4: this.OR_REG_REG,
+            0xa5: this.OR_IMM_REG,
+            0xa6: this.AND_REG_REG,
+            0xa7: this.AND_IMM_REG,
+            0xa8: this.NOT_REG,
+            0xa9: this.SFL_REG,
+            0xaa: this.SFR_REG,
+            //conditionals,
+            0xbf: this.END,
+            0xb0: this.EQL_REG_REG,
+            0xb1: this.EQL_REG_IMM,
+            0xb2: this.EQL_REG_ADD,
         };
 
         const method = instructionMap[opCode];
-        console.log("RUNNING METHOD", method);
         this.incrementPC();
+
+        console.log(method, this.flags.CONDITION);
+        if (!this.flags.CONDITION) {
+            if (method === this.END) return method.bind(this)();
+            else return;
+        }
+
         method.bind(this)();
     }
 
@@ -153,7 +177,6 @@ class Processor {
         const register1 = this.fetchRegister();
         const register2 = this.fetchRegister();
 
-        console.log("reg1 =", register1, "reg2 =", register2);
         if (!register1 || !register2) return;
 
         register2.setValue(register1.getValue());
@@ -261,7 +284,7 @@ class Processor {
         if (!reg1 || !reg2) return;
 
         const value = reg1.getValue() - reg2.getValue();
-        if (value < 0) this.flags.ZERO = true;
+        if (value <= 0) this.flags.ZERO = true;
 
         this.registers.ACC.setValue(value & 0xffff);
     }
@@ -272,10 +295,95 @@ class Processor {
         if (!register) return;
 
         const value = register.getValue() - immediate;
-        console.log(`${immediate} - ${register.getValue()} = ${value}`);
-        if (value < 0) this.flags.ZERO = true;
+        if (value <= 0) this.flags.ZERO = true;
 
         this.registers.ACC.setValue(value & 0xffff);
+    }
+
+    private OR_REG_REG() {
+        const reg1 = this.fetchRegister();
+        const reg2 = this.fetchRegister();
+        if (!reg1 || !reg2) return;
+
+        this.registers.ACC.setValue(reg1.getValue() | reg2.getValue());
+    }
+
+    private OR_IMM_REG() {
+        const immediate = this.fetch16();
+        const reg = this.fetchRegister();
+        if (!reg) return;
+
+        this.registers.ACC.setValue(immediate | reg.getValue());
+    }
+
+    private AND_REG_REG() {
+        const reg1 = this.fetchRegister();
+        const reg2 = this.fetchRegister();
+        if (!reg1 || !reg2) return;
+
+        this.registers.ACC.setValue(reg1.getValue() & reg2.getValue());
+    }
+
+    private AND_IMM_REG() {
+        const immediate = this.fetch16();
+        const reg = this.fetchRegister();
+        if (!reg) return;
+
+        this.registers.ACC.setValue(immediate & reg.getValue());
+    }
+
+    private NOT_REG() {
+        const register = this.fetchRegister();
+        if (!register) return;
+
+        this.registers.ACC.setValue((~register.getValue() >>> 0) & 0xffff);
+    }
+
+    private SFL_REG() {
+        const register = this.fetchRegister();
+        const shiftAmount = this.fetch8();
+        if (!register) return;
+
+        const value = register.getValue() << shiftAmount;
+
+        this.registers.ACC.setValue(value);
+    }
+
+    private SFR_REG() {
+        const register = this.fetchRegister();
+        const shiftAmount = this.fetch8();
+        if (!register) return;
+
+        this.registers.ACC.setValue(register.getValue() >>> shiftAmount);
+    }
+    //Conditions
+    private END() {
+        this.flags.CONDITION = true;
+    }
+
+    private EQL_REG_REG() {
+        const reg1 = this.fetchRegister();
+        const reg2 = this.fetchRegister();
+        if (!reg1 || !reg2) return;
+
+        this.flags.CONDITION = reg1.getValue() === reg2.getValue();
+    }
+
+    private EQL_REG_IMM() {
+        const reg = this.fetchRegister();
+        const value = this.fetch16();
+        if (!reg) return;
+
+        this.flags.CONDITION = reg.getValue() === value;
+    }
+
+    private EQL_REG_ADD() {
+        const reg = this.fetchRegister();
+        const address = this.fetch16();
+        if (!reg) return;
+
+        const memoryValue = this.memory.getUInt16(address);
+        this.flags.CONDITION = reg.getValue() === memoryValue;
     }
 }
 

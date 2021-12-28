@@ -53,7 +53,7 @@ export const hexValue = T.transform(
     T.sequenceOf([T.str("0x"), T.regexMatch(/^[0-9a-fA-F]+/)]),
     ({ result }) => ({
         type: "hexValue",
-        value: Number(`0x${result[1]}`),
+        value: Number(`0x${result[1]}`) & 0xffff,
     })
 );
 
@@ -61,13 +61,13 @@ export const binaryValue = T.transform(
     T.sequenceOf([T.str("0b"), T.digits]),
     ({ result }) => ({
         type: "binaryValue",
-        value: Number(`0b${result[1]}`),
+        value: Number(`0b${result[1]}`) & 0xffff,
     })
 );
 
 export const decimalValue = T.transform(T.digits, ({ result }) => ({
     type: "decimalValue",
-    value: Number(result),
+    value: Number(result) & 0xffff,
 }));
 
 export const immediateValue = T.transform(
@@ -75,6 +75,14 @@ export const immediateValue = T.transform(
     ({ result }) => ({
         type: "immediate",
         value: result.value,
+    })
+);
+
+export const byte = T.transform(
+    T.sequenceOf([T.str("@"), immediateValue]),
+    ({ result }) => ({
+        type: "immediateByte",
+        value: result.value & 0xff,
     })
 );
 

@@ -42,6 +42,13 @@ const encodeOperand = (operand: Operand, labelMap: LabelMap) => {
         };
     }
 
+    if (operand.type === "immediateByte") {
+        return {
+            sizeInBytes: 1,
+            value: operand.value as number,
+        };
+    }
+
     if (operand.type === "address") {
         if (typeof operand.value === "number") {
             return {

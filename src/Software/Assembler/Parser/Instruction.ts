@@ -4,6 +4,7 @@ import * as T from "@guigalleta/t-parser";
 const operand = T.choice([
     atoms.register,
     atoms.immediateValue,
+    atoms.byte,
     atoms.address,
     atoms.registerPointer,
     atoms.labelRead,

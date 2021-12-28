@@ -15,11 +15,14 @@ assemble().then((program) => {
     const StackDebugger = createMemoryDebugger(memory, "Stack");
     MemoryDebugger.debugAt(0);
 
-    while (processor.registers.PC.getValue() < 200) {
+    let instructionCount = 0;
+    while (instructionCount < 50) {
         processor.onClock();
         if (processor.flags.HLT) break;
+        instructionCount++;
     }
 
     StackDebugger.debugAt(0xfff0);
     CPUDebugger.debugRegisters();
+    console.log(processor.flags);
 });
