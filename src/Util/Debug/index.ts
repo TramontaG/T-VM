@@ -22,8 +22,7 @@ const startDebug = (processor: Processor) => {
         CPUDebugger.debugRegisters();
         CPUDebugger.debugFlags();
 
-        memoryDebugger.debugAt(0xfef0);
-        memoryDebugger.debugAt(0xfff0);
+        memoryDebugger.debugFrom(0xffc0).to(0xffff);
 
         const result = await question("Press Enter for next clock");
     };

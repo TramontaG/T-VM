@@ -38,6 +38,7 @@ class Processor {
     memory: Memory;
     registers: Registers;
     flags: Flags;
+    frameSize: number;
 
     constructor(options: Options) {
         this.memory = options.memory;
@@ -60,6 +61,8 @@ class Processor {
         this.registers.SP.setValue(0x10000);
         this.registers.FP.setValue(0x10000);
         this.registers.RR.setValue(0xff00);
+
+        this.frameSize = 0;
 
         this.flags = {
             HLT: false,
@@ -167,6 +170,10 @@ class Processor {
             //??
             0xc0: this.REP_IMMByte,
             0xc1: this.ERP,
+            //subroutines
+            0xc2: this.JSR_ADD,
+            0xc4: this.RET,
+            0xc5: this.ARG_IMMB_REG,
         };
 
         const method = instructionMap[opCode];
@@ -241,12 +248,14 @@ class Processor {
     //Stack manipulation
     private push8(value: number, register = this.registers.SP) {
         register.decrement();
+        this.frameSize++;
         const whereStackPointerIsPointing = register.getUInt16(0);
         this.memory.setUInt8(whereStackPointerIsPointing, value & 0xff);
     }
 
     private push16(value: number, register = this.registers.SP) {
         register.decrement(2);
+        this.frameSize += 2;
         const whereStackPointerIsPointing = register.getUInt16(0);
         this.memory.setUInt16(whereStackPointerIsPointing, value & 0xffff);
     }
@@ -255,6 +264,7 @@ class Processor {
         const whereStackPointerIsPointing = register.getUInt16(0);
         const value = this.memory.getUInt8(whereStackPointerIsPointing);
         register.increment();
+        this.frameSize--;
         return value;
     }
 
@@ -262,6 +272,7 @@ class Processor {
         const whereStackPointerIsPointing = register.getUInt16(0);
         const value = this.memory.getUInt16(whereStackPointerIsPointing);
         register.increment(2);
+        this.frameSize -= 2;
         return value;
     }
 
@@ -280,6 +291,38 @@ class Processor {
         const higher = this.memory.getUInt16(whereStackIsPointing);
         const lower = this.memory.getUInt16(whereStackIsPointing + 2);
         return [higher, lower];
+    }
+
+    private pushState() {
+        this.push16(this.registers.R1.getValue());
+        this.push16(this.registers.R2.getValue());
+        this.push16(this.registers.R3.getValue());
+        this.push16(this.registers.R4.getValue());
+        this.push16(this.registers.R5.getValue());
+        this.push16(this.registers.R6.getValue());
+        this.push16(this.registers.R7.getValue());
+        this.push16(this.registers.R8.getValue());
+        this.push16(this.registers.PC.getValue());
+        this.push8(this.frameSize + 1);
+        this.frameSize = 0;
+        this.registers.FP.setValue(this.registers.SP.getValue());
+    }
+
+    private popState() {
+        this.registers.SP.setValue(this.registers.FP.getValue());
+
+        const frameSize = this.pop8();
+        this.registers.PC.setValue(this.pop16());
+        this.registers.R8.setValue(this.pop16());
+        this.registers.R7.setValue(this.pop16());
+        this.registers.R6.setValue(this.pop16());
+        this.registers.R5.setValue(this.pop16());
+        this.registers.R4.setValue(this.pop16());
+        this.registers.R3.setValue(this.pop16());
+        this.registers.R2.setValue(this.pop16());
+        this.registers.R1.setValue(this.pop16());
+
+        this.frameSize = frameSize;
     }
 
     //Repetition Stack Manipulation
@@ -345,6 +388,28 @@ class Processor {
         const register = this.fetchRegister();
         if (!register) return;
         this.registers.PC.setValue(register.getValue());
+    }
+
+    private JSR_ADD() {
+        const address = this.fetch16();
+        this.pushState();
+        this.registers.PC.setValue(address);
+    }
+
+    private JSR_REG() {}
+
+    private RET() {
+        this.popState();
+    }
+
+    private ARG_IMMB_REG() {
+        const argNumber = this.fetch8();
+        const register = this.fetchRegister();
+        if (!register) return;
+
+        const whereStackPointerIsPointing = this.registers.RR.getValue();
+        const address = whereStackPointerIsPointing + argNumber;
+        register.setValue(this.memory.getUInt16(address));
     }
 
     //ALU
@@ -568,6 +633,7 @@ class Processor {
         );
     }
 
+    //Repetitions
     private REP_IMMByte() {
         const repetitionAmount = this.fetch8();
         const jumpBackAddress = this.registers.PC.getValue();

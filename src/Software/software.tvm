@@ -1,6 +1,15 @@
-REP @5;
-    REP @3;
-        ADD 1 ACC;
-    ERP;
-ERP;
+MOV 0x1111 R1;
+MOV 0x2222 R2;
+PSH 0xABCD;
+PSH 0x1234;
+JSR $somefunc;
+PSH 0x4321;
 HLT;
+
+somefunc:
+    MOV 0x3333 R3;
+    MOV 0x1234 R1;
+    MOV 0xFFFF R2;
+    PSH 0x1111;
+    PSH 0x1234;
+    RET;

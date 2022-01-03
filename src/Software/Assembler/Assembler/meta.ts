@@ -214,6 +214,27 @@ export const instructions = {
             sizeInBytes: 1,
         },
     },
+    //Subrotines
+
+    JSR: {
+        address: {
+            opCode: 0xc2,
+            sizeInBytes: 3,
+        },
+    },
+    RET: {
+        noArgs: {
+            opCode: 0xc4,
+            sizeInBytes: 1,
+        },
+    },
+
+    ARG: {
+        immediateByte_register: {
+            opCode: 0xc5,
+            sizeInBytes: 1,
+        },
+    },
 };
 
 export const registers = {

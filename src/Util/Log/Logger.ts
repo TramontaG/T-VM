@@ -3,7 +3,7 @@ import Memory from "../../Hardware/Memory";
 import Processor from "../../Hardware/Processor";
 import colorLog from "./colorLog";
 import { GeneralRegisters } from "./../../Hardware/Processor";
-import { register } from "../../Software/Assembler/Parser/Atoms";
+import { address, register } from "../../Software/Assembler/Parser/Atoms";
 
 const getHexByte = (byte: number) =>
     byte.toString(16).toUpperCase().padStart(2, "0");
@@ -37,8 +37,40 @@ export const createMemoryDebugger = (memory: Memory, title: string) => {
         }
     };
 
+    const debugFrom = (begin: number) => ({
+        to: (end: number) => {
+            const lines = Math.ceil((end - begin) / 16);
+
+            let header = `| ___ |`;
+            let debugString = "";
+            let currentLine = 0;
+            let createHeader = true;
+
+            for (let i = 0; i < lines; i++) {
+                debugString += `| ${getHexByte(
+                    ((begin + 16 * currentLine) & 0xfff0) >> 4
+                )} | `;
+
+                for (
+                    let j = begin + 16 * currentLine;
+                    j < begin + 16 * (currentLine + 1);
+                    j++
+                ) {
+                    if (createHeader) header += ` ${getHexByte(j & 0x000f)} |`;
+                    debugString += `${getHexByte(memory.getUInt8(j))} | `;
+                }
+                currentLine++;
+                debugString += "\n";
+                createHeader = false;
+            }
+            colorLog(header, "cyan");
+            colorLog(debugString, "green");
+        },
+    });
+
     return {
         debugAt,
+        debugFrom,
     };
 };
 
@@ -71,6 +103,7 @@ export const createCpuDebugger = (cpu: Processor) => {
         colorLog(header, "green");
         colorLog(log, "cyan");
         colorLog(debugFlags(), "yellow");
+        console.log({ frameSize: cpu.frameSize });
     };
 
     const logRegister = (register: keyof typeof GeneralRegisters) => {
