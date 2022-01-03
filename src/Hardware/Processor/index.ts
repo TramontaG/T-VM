@@ -15,6 +15,7 @@ export enum GeneralRegisters {
     SP = "SP",
     FP = "FP",
     PC = "PC",
+    RR = "RR",
 }
 
 type Flags = {
@@ -22,6 +23,7 @@ type Flags = {
     CARRY: boolean;
     ZERO: boolean;
     CONDITION: boolean;
+    REPEAT: boolean;
 };
 
 type Options = {
@@ -52,16 +54,19 @@ class Processor {
             SP: new Register(2),
             FP: new Register(2),
             PC: new Register(2),
+            RR: new Register(2),
         };
 
-        this.registers.SP.setValue(0xfffe);
-        this.registers.FP.setValue(0xfffe);
+        this.registers.SP.setValue(0x10000);
+        this.registers.FP.setValue(0x10000);
+        this.registers.RR.setValue(0xff00);
 
         this.flags = {
             HLT: false,
             CARRY: false,
             ZERO: false,
             CONDITION: true,
+            REPEAT: true,
         };
     }
 
@@ -143,10 +148,25 @@ class Processor {
             0xa9: this.SFL_REG,
             0xaa: this.SFR_REG,
             //conditionals,
-            0xbf: this.END,
+            0xbf: this.EIF,
             0xb0: this.EQL_REG_REG,
             0xb1: this.EQL_REG_IMM,
             0xb2: this.EQL_REG_ADD,
+            0xb3: this.GTR_REG_REG,
+            0xb4: this.GTR_REG_IMM,
+            0xb5: this.GTR_REG_ADD,
+            0xb6: this.LSS_REG_REG,
+            0xb7: this.LSS_REG_IMM,
+            0xb8: this.LSS_REG_ADD,
+            0xb9: this.GEQ_REG_REG,
+            0xba: this.GEQ_REG_IMM,
+            0xbb: this.GEQ_REG_ADD,
+            0xbc: this.LEQ_REG_REG,
+            0xbd: this.LEQ_REG_IMM,
+            0xbe: this.LEQ_REG_ADD,
+            //??
+            0xc0: this.REP_IMMByte,
+            0xc1: this.ERP,
         };
 
         const method = instructionMap[opCode];
@@ -154,7 +174,7 @@ class Processor {
 
         console.log(method, this.flags.CONDITION);
         if (!this.flags.CONDITION) {
-            if (method === this.END) return method.bind(this)();
+            if (method === this.EIF) return method.bind(this)();
             else return;
         }
 
@@ -219,28 +239,100 @@ class Processor {
     }
 
     //Stack manipulation
+    private push8(value: number, register = this.registers.SP) {
+        register.decrement();
+        const whereStackPointerIsPointing = register.getUInt16(0);
+        this.memory.setUInt8(whereStackPointerIsPointing, value & 0xff);
+    }
+
+    private push16(value: number, register = this.registers.SP) {
+        register.decrement(2);
+        const whereStackPointerIsPointing = register.getUInt16(0);
+        this.memory.setUInt16(whereStackPointerIsPointing, value & 0xffff);
+    }
+
+    private pop8(register = this.registers.SP) {
+        const whereStackPointerIsPointing = register.getUInt16(0);
+        const value = this.memory.getUInt8(whereStackPointerIsPointing);
+        register.increment();
+        return value;
+    }
+
+    private pop16(register = this.registers.SP) {
+        const whereStackPointerIsPointing = register.getUInt16(0);
+        const value = this.memory.getUInt16(whereStackPointerIsPointing);
+        register.increment(2);
+        return value;
+    }
+
+    private peek8(register = this.registers.SP) {
+        const whereStackIsPointing = register.getValue();
+        return this.memory.getUInt8(whereStackIsPointing);
+    }
+
+    private peek16(register = this.registers.SP) {
+        const whereStackIsPointing = register.getValue();
+        return this.memory.getUInt16(whereStackIsPointing);
+    }
+
+    private peek32(register = this.registers.SP) {
+        const whereStackIsPointing = register.getValue();
+        const higher = this.memory.getUInt16(whereStackIsPointing);
+        const lower = this.memory.getUInt16(whereStackIsPointing + 2);
+        return [higher, lower];
+    }
+
+    //Repetition Stack Manipulation
+    private pushRepetition(
+        jumpBackAddress: number,
+        repetitions: number,
+        current = 0
+    ) {
+        this.push16(jumpBackAddress, this.registers.RR);
+        this.push8(repetitions, this.registers.RR);
+        this.push8(current, this.registers.RR);
+    }
+
+    private peekRepetition() {
+        const current = this.pop8(this.registers.RR);
+        const repetitions = this.pop8(this.registers.RR);
+        const jumpBackAddress = this.pop16(this.registers.RR);
+
+        this.registers.RR.decrement(4);
+
+        return {
+            jumpBackAddress,
+            current,
+            repetitions,
+        };
+    }
+
+    private popRepetition() {
+        const current = this.pop8(this.registers.RR);
+        const repetitions = this.pop8(this.registers.RR);
+        const jumpBackAddress = this.pop16(this.registers.RR);
+
+        return {
+            jumpBackAddress,
+            current,
+            repetitions,
+        };
+    }
+
     private PSH_REG() {
         const register = this.fetchRegister();
-        const whereStackPointerIsPointing = this.registers.SP.getUInt16(0);
         if (!register) return;
-        this.memory.setUInt16(whereStackPointerIsPointing, register.getValue());
-        this.registers.SP.decrement(2);
+        this.push16(register.getValue());
     }
 
     private PSH_IMM() {
-        const value = this.fetch16();
-        const whereStackPointerIsPointing = this.registers.SP.getUInt16(0);
-        this.memory.setUInt16(whereStackPointerIsPointing, value);
-        this.registers.SP.decrement(2);
+        this.push16(this.fetch16());
     }
 
     private POP_REG() {
-        this.registers.SP.increment(2);
-        const whereStackPointerIsPointing = this.registers.SP.getUInt16(0);
-        const value = this.memory.getUInt16(whereStackPointerIsPointing);
         const register = this.fetchRegister();
         if (!register) return;
-        register.setValue(value);
+        register.setValue(this.pop16());
     }
 
     //Branching
@@ -357,33 +449,142 @@ class Processor {
         this.registers.ACC.setValue(register.getValue() >>> shiftAmount);
     }
     //Conditions
-    private END() {
+    private EIF() {
         this.flags.CONDITION = true;
+        this.flags.REPEAT = false;
+    }
+
+    private CMP_REG_REG(compareFn: (r1: Register, r2: Register) => boolean) {
+        const reg1 = this.fetchRegister();
+        const reg2 = this.fetchRegister();
+        if (!reg1 || !reg2) return false;
+        return compareFn(reg1, reg2);
+    }
+
+    private CMP_REG_IMM(compareFn: (reg: Register, imm: number) => boolean) {
+        const reg = this.fetchRegister();
+        const value = this.fetch16();
+        if (!reg) return false;
+
+        return compareFn(reg, value);
+    }
+
+    private CMP_REG_ADD(compareFn: (reg: Register, val: number) => boolean) {
+        const reg = this.fetchRegister();
+        const address = this.fetch16();
+        if (!reg) return false;
+
+        const memoryValue = this.memory.getUInt16(address);
+        return compareFn(reg, memoryValue);
     }
 
     private EQL_REG_REG() {
-        const reg1 = this.fetchRegister();
-        const reg2 = this.fetchRegister();
-        if (!reg1 || !reg2) return;
-
-        this.flags.CONDITION = reg1.getValue() === reg2.getValue();
+        this.flags.CONDITION = this.CMP_REG_REG(
+            (r1, r2) => r1.getValue() === r2.getValue()
+        );
     }
 
     private EQL_REG_IMM() {
-        const reg = this.fetchRegister();
-        const value = this.fetch16();
-        if (!reg) return;
-
-        this.flags.CONDITION = reg.getValue() === value;
+        this.flags.CONDITION = this.flags.CONDITION = this.CMP_REG_IMM(
+            (r1, value) => r1.getValue() === value
+        );
     }
 
     private EQL_REG_ADD() {
-        const reg = this.fetchRegister();
-        const address = this.fetch16();
-        if (!reg) return;
+        this.flags.CONDITION = this.CMP_REG_ADD(
+            (reg1, value) => reg1.getValue() === value
+        );
+    }
 
-        const memoryValue = this.memory.getUInt16(address);
-        this.flags.CONDITION = reg.getValue() === memoryValue;
+    private GTR_REG_REG() {
+        this.flags.CONDITION = this.CMP_REG_REG(
+            (r1, r2) => r1.getValue() > r2.getValue()
+        );
+    }
+
+    private GTR_REG_IMM() {
+        this.flags.CONDITION = this.flags.CONDITION = this.CMP_REG_IMM(
+            (r1, value) => r1.getValue() > value
+        );
+    }
+
+    private GTR_REG_ADD() {
+        this.flags.CONDITION = this.CMP_REG_ADD(
+            (reg1, value) => reg1.getValue() > value
+        );
+    }
+
+    private LSS_REG_REG() {
+        this.flags.CONDITION = this.CMP_REG_REG(
+            (r1, r2) => r1.getValue() < r2.getValue()
+        );
+    }
+
+    private LSS_REG_IMM() {
+        this.flags.CONDITION = this.flags.CONDITION = this.CMP_REG_IMM(
+            (r1, value) => r1.getValue() < value
+        );
+    }
+
+    private LSS_REG_ADD() {
+        this.flags.CONDITION = this.CMP_REG_ADD(
+            (reg1, value) => reg1.getValue() < value
+        );
+    }
+
+    private GEQ_REG_REG() {
+        this.flags.CONDITION = this.CMP_REG_REG(
+            (r1, r2) => r1.getValue() >= r2.getValue()
+        );
+    }
+
+    private GEQ_REG_IMM() {
+        this.flags.CONDITION = this.flags.CONDITION = this.CMP_REG_IMM(
+            (r1, value) => r1.getValue() >= value
+        );
+    }
+
+    private GEQ_REG_ADD() {
+        this.flags.CONDITION = this.CMP_REG_ADD(
+            (reg1, value) => reg1.getValue() >= value
+        );
+    }
+
+    private LEQ_REG_REG() {
+        this.flags.CONDITION = this.CMP_REG_REG(
+            (r1, r2) => r1.getValue() <= r2.getValue()
+        );
+    }
+
+    private LEQ_REG_IMM() {
+        this.flags.CONDITION = this.flags.CONDITION = this.CMP_REG_IMM(
+            (r1, value) => r1.getValue() <= value
+        );
+    }
+
+    private LEQ_REG_ADD() {
+        this.flags.CONDITION = this.CMP_REG_ADD(
+            (reg1, value) => reg1.getValue() <= value
+        );
+    }
+
+    private REP_IMMByte() {
+        const repetitionAmount = this.fetch8();
+        const jumpBackAddress = this.registers.PC.getValue();
+
+        this.pushRepetition(jumpBackAddress, repetitionAmount, 0);
+    }
+
+    private ERP() {
+        const { jumpBackAddress, current, repetitions } = this.peekRepetition();
+        console.log({ jumpBackAddress, current, repetitions });
+        if (current + 1 >= repetitions) {
+            return this.popRepetition();
+        } else {
+            this.pop8(this.registers.RR);
+            this.push8(current + 1, this.registers.RR);
+            this.registers.PC.setValue(jumpBackAddress);
+        }
     }
 }
 

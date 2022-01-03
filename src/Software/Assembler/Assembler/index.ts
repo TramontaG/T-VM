@@ -155,8 +155,8 @@ const hoistLabels = (ast: any[]) => {
 export default () =>
     getProgram().then((program) => {
         const ast = programParser(program);
-        // console.log(ast);
+        console.log(JSON.stringify(ast, null, "    "));
         const assembled = assemble(ast);
-        console.log(assembled);
+        // console.log(assembled);
         return assembled;
     });

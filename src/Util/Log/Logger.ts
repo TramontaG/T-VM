@@ -57,6 +57,7 @@ export const createCpuDebugger = (cpu: Processor) => {
             GeneralRegisters.SP,
             GeneralRegisters.FP,
             GeneralRegisters.PC,
+            GeneralRegisters.RR,
         ];
         const header = loggedRegisters
             .map((register) => `  ${register}\t|`)
@@ -69,15 +70,26 @@ export const createCpuDebugger = (cpu: Processor) => {
         colorLog("\nProcessor", "magenta");
         colorLog(header, "green");
         colorLog(log, "cyan");
+        colorLog(debugFlags(), "yellow");
     };
 
     const logRegister = (register: keyof typeof GeneralRegisters) => {
         return `${getHex16(cpu.registers[register].getUInt16(0))}`;
     };
 
+    const debugFlags = () => {
+        return Object.keys(cpu.flags)
+            .map((flagName) => {
+                const flagValue = cpu.flags[flagName as keyof typeof cpu.flags];
+                return `${flagName} - ${flagValue ? "1" : "0"}`;
+            })
+            .join(" | ");
+    };
+
     return {
         debugRegisters,
         logRegister,
+        debugFlags,
     };
 };
 

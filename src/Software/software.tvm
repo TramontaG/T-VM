@@ -1,10 +1,6 @@
-loop:
-    MOV 0x5 $0xFF;
-    EQL ACC $0xFF;
-        JMP $end;
-    END;
-    ADD 1 ACC;
-    JMP $loop;
-
-end:
-    HLT;
+REP @5;
+    REP @3;
+        ADD 1 ACC;
+    ERP;
+ERP;
+HLT;

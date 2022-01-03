@@ -196,9 +196,21 @@ export const instructions = {
             sizeInBytes: 4,
         },
     },
-    END: {
+    EIF: {
         noArgs: {
             opCode: 0xbf,
+            sizeInBytes: 1,
+        },
+    },
+    REP: {
+        immediateByte: {
+            opCode: 0xc0,
+            sizeInBytes: 2,
+        },
+    },
+    ERP: {
+        noArgs: {
+            opCode: 0xc1,
             sizeInBytes: 1,
         },
     },

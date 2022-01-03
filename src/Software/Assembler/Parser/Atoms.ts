@@ -82,7 +82,7 @@ export const byte = T.transform(
     T.sequenceOf([T.str("@"), immediateValue]),
     ({ result }) => ({
         type: "immediateByte",
-        value: result.value & 0xff,
+        value: result[1].value & 0xff,
     })
 );
 
